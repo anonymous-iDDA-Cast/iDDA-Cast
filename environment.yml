@@ -37,7 +37,7 @@ dependencies:
       - tqdm==4.70.1
 
       # Optional: Visualization
-      # - matplotlib==3.10.9
+       - matplotlib==3.10.9
 
       # Optional: PEFT / LoRA
       # - peft==0.21.3
