@@ -488,6 +488,27 @@ random.seed(args.seed)
 torch.manual_seed(args.seed)
 np.random.seed(args.seed)
 
+# Set single-process environment variables when no distributed launcher is active.
+# Distributed launchers provide their own rank information, which must be preserved.
+distributed_launcher = any(
+    name in os.environ
+    for name in (
+        'RANK',
+        'LOCAL_RANK',
+        'SLURM_PROCID',
+        'OMPI_COMM_WORLD_RANK',
+        'PMI_RANK',
+    )
+)
+world_size = int(os.environ.get('WORLD_SIZE', '1'))
+
+if not distributed_launcher and world_size == 1:
+    os.environ.setdefault('RANK', '0')
+    os.environ.setdefault('WORLD_SIZE', '1')
+    os.environ.setdefault('LOCAL_RANK', '0')
+    os.environ.setdefault('MASTER_ADDR', '127.0.0.1')
+    os.environ.setdefault('MASTER_PORT', '29501')
+
 # Training-only execution. DeepSpeed ZeRO-2 gets the optimizer below.
 ddp_kwargs = DistributedDataParallelKwargs(find_unused_parameters=True)
 deepspeed_plugin = DeepSpeedPlugin(hf_ds_config='./ds_config_zero2.json')
@@ -780,9 +801,8 @@ for ii in range(args.itr):
                     f"output: {grouped_summary['output_block']['total']:.4f}s"
                 )
 
-        # Validation/test monitoring during training is kept exactly in the
-        # existing style. Final component metrics are computed only after
-        # the final training epoch is finished (no checkpoint).
+        # Monitor validation and test performance during training.
+        # Compute final component metrics after the last training epoch.
         sync_if_cuda(accelerator.device)
         val_start_time = time.time()
         vali_loss, vali_mae_loss = vali(
@@ -874,4 +894,3 @@ for ii in range(args.itr):
 
     if accelerator.num_processes > 1:
         accelerator.wait_for_everyone()
-        
