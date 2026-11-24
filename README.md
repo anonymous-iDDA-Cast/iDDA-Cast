@@ -38,9 +38,8 @@ iDDA-Cast is implemented using Python, PyTorch, Hugging Face Transformers, and A
 
 Clone the repository:
 
-<!-- TODO: replace <your-account> with the actual GitHub account name. -->
 ```bash
-git clone https://github.com/<your-account>/iDDA-Cast.git
+git clone https://github.com/anonymous-iDDA-Cast/iDDA-Cast.git
 cd iDDA-Cast
 ```
 
